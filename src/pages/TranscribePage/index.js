@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 import WaveSurfer from "wavesurfer.js";
 import WaveSurferRegionsPlugin from "wavesurfer.js/dist/plugin/wavesurfer.regions";
 import WaveSurferTimelinePlugin from "wavesurfer.js/dist/plugin/wavesurfer.timeline";
@@ -10,10 +10,11 @@ import { useState } from "react";
 import axios from "axios";
 import Alert from "../../components/molecules/Alert";
 import SegmentCard from "../../components/molecules/SegmentCard";
-import { ip, port } from "../../constant/uri";
+import { API_PORT, API_URL } from "../../constant/uri";
 import { randomColor } from "../../utils/audioUtils";
+import TextBox from "../../components/molecules/TextBox";
 
-function RecordingPage() {
+function TranscribePage() {
   const [dataWaveform, setDataWaveform] = useState({
     file_name: null,
     db_threshold: null,
@@ -25,50 +26,53 @@ function RecordingPage() {
   const [segmentListData, setSegmentListData] = useState(null);
   const [selectedWavList, setSelectedWavList] = useState(null);
 
-  const regions = [
-    {
-      start: 100,
-      end: 180,
-      color: "hsla(400, 100%, 30%, 0.1)",
-    },
-    {
-      start: 200,
-      end: 400,
-      color: "hsla(200, 50%, 70%, 0.1)",
-    },
-  ];
+  // const regions = [
+  //   {
+  //     start: 100,
+  //     end: 180,
+  //     color: "hsla(400, 100%, 30%, 0.1)",
+  //   },
+  //   {
+  //     start: 200,
+  //     end: 400,
+  //     color: "hsla(200, 50%, 70%, 0.1)",
+  //   },
+  // ];
 
   const getWavList = async () => {
     const respWavList = await axios({
       method: "get",
-      url: `http://${ip}:${port}/wav`,
-    })
+      url: `http://${API_URL}:${API_PORT}/wav`,
+    });
     setWavListData(respWavList.data.data);
-    console.log(respWavList.data.data)
-  }
+    console.log(respWavList.data.data);
+  };
 
-  const getSegmentList = async(file_name, db_threshold, min_silence_len) => {
-    const respSegmentList = await axios.post("http://103.106.72.182:36002/audio/split", {
-      file_name,
-      db_threshold,
-      min_silence_len
-    })
-    return respSegmentList.data.segments
-  }
+  const getSegmentList = async (file_name, db_threshold, min_silence_len) => {
+    const respSegmentList = await axios.post(
+      "http://103.106.72.182:36002/audio/split",
+      {
+        file_name,
+        db_threshold,
+        min_silence_len,
+      }
+    );
+    return respSegmentList.data.segments;
+  };
 
-  const onTranscriptFile = async() => {
-    const resp = getSegmentList()
-    console.log(resp)
+  const onTranscriptFile = async () => {
+    const resp = getSegmentList();
+    console.log(resp);
     setSegmentListData(resp);
-  }
+  };
 
   const onSelectWavList = (e) => {
     setDataWaveform({
       ...dataWaveform,
       ["file_name"]: e.target.value,
     });
-    setSelectedWavList(e.target.value)
-  }
+    setSelectedWavList(e.target.value);
+  };
 
   useEffect(() => {
     const wavesurfer = WaveSurfer.create({
@@ -126,15 +130,15 @@ function RecordingPage() {
 
       wavesurferState.on("ready", function () {
         wavesurferState.play();
-        //   fetch("./annotations.json")
-        //     .then((r) => {
-        //       r.json();
-        //     })
-        //     .then((data) => {
-        //       console.log(data);
-        //       loadRegions(data);
-        //       saveRegions();
-        //     }).catch(err=>console.log(err))
+          fetch("./annotations.json")
+            .then((r) => {
+              r.json();
+            })
+            .then((data) => {
+              console.log(data);
+              loadRegions(data);
+              saveRegions();
+            }).catch(err=>console.log(err))
       });
     }
   };
@@ -164,7 +168,7 @@ function RecordingPage() {
     } else {
       axios({
         method: "post",
-        url: `http://${ip}:${port}/wav/upload`,
+        url: `http://${API_URL}:${API_PORT}/wav/upload`,
         data: data,
         headers: {
           "Content-Type": "multipart/form-data",
@@ -172,7 +176,11 @@ function RecordingPage() {
       })
         .then((res) => {
           console.log(res);
-          Alert({ title: "Success", text: "Success send the .wav file to server!", icon: "success" });
+          Alert({
+            title: "Success",
+            text: "Success send the .wav file to server!",
+            icon: "success",
+          });
           // if uploaded, then get the segment
           const dataaa = [
             { start: 116.9, end: 216.2, data: {} },
@@ -248,8 +256,20 @@ function RecordingPage() {
           onPlay={onPlay}
         />
       </div>
+      <TextBox
+        value={"deadawed"}
+        onChange={(e) => console.log(e)}
+        title={"Original Transcription"}
+        onSave={console.log("")}
+      />
+      <TextBox
+        value={"deadawed"}
+        onChange={(e) => console.log(e)}
+        title={"Normalized Transcription"}
+        onSave={console.log("")}
+      />
     </div>
   );
 }
 
-export default RecordingPage;
+export default TranscribePage;

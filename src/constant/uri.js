@@ -1,2 +1,2 @@
-export const ip = "103.106.72.182";
-export const port = "36002";
+export const API_URL = process.env.API_URL;
+export const API_PORT = process.env.API_PORT;
